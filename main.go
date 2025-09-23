@@ -2,8 +2,9 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"io"
 	"os"
+	"time"
 )
 
 func check(e error) {
@@ -12,11 +13,11 @@ func check(e error) {
 	}
 }
 
-func main() {
-	file, err := os.Open("./message.txt")
-	check(err)
-	str := ""
+func getLinesChannel(file io.ReadCloser) <-chan string {
+
 	var i int
+	str := ""
+	c := make(chan string)
 	for {
 		data := make([]byte, 8)
 		counter, err := file.Read(data)
@@ -28,12 +29,19 @@ func main() {
 			str += string(data[:counter])
 		} else {
 			str += string(data[:i])
-			fmt.Printf("gAA: %s\ni:%d\n", str, i)
+			c <- str
+			time.Sleep(1 * time.Second)
 			str = ""
 		}
 		if i != -1 {
 			str += string(data[i+1:])
 		}
 	}
+	return c
+}
+func main() {
+	_, err := os.Open("./message.txt")
+	check(err)
+	//	for i range getLinesChannel(file)
 
 }
