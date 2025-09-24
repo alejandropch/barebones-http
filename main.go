@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -14,34 +15,39 @@ func check(e error) {
 }
 
 func getLinesChannel(file io.ReadCloser) <-chan string {
-
 	var i int
 	str := ""
 	c := make(chan string)
-	for {
-		data := make([]byte, 8)
-		counter, err := file.Read(data)
-		if err != nil {
-			break
-		}
+	go func() {
+		defer close(c)
+		defer file.Close()
+		for {
+			data := make([]byte, 8)
+			counter, err := file.Read(data)
+			if err != nil {
+				break
+			}
 
-		if i = bytes.IndexByte(data, '\n'); i == -1 {
-			str += string(data[:counter])
-		} else {
-			str += string(data[:i])
-			c <- str
-			time.Sleep(1 * time.Second)
-			str = ""
+			if i = bytes.IndexByte(data, '\n'); i == -1 {
+				str += string(data[:counter])
+			} else {
+				str += string(data[:i])
+				c <- str
+				time.Sleep(500 * time.Millisecond)
+				str = ""
+			}
+			if i != -1 {
+				str += string(data[i+1:])
+			}
 		}
-		if i != -1 {
-			str += string(data[i+1:])
-		}
-	}
+	}()
 	return c
 }
 func main() {
-	_, err := os.Open("./message.txt")
+	file, err := os.Open("./message.txt")
 	check(err)
-	//	for i range getLinesChannel(file)
 
+	for i := range getLinesChannel(file) {
+		fmt.Printf("%s\n", i)
+	}
 }
