@@ -41,13 +41,15 @@ func getLinesChannel(file io.ReadCloser) <-chan string {
 			}
 		}
 	}()
-	return c
+	return c // 1) return out because remember that the go function will execute on other thread
+	// so this will be executed almost immediately
+
 }
 func main() {
 	file, err := os.Open("./message.txt")
 	check(err)
 
-	for i := range getLinesChannel(file) {
+	for i := range getLinesChannel(file) { // 2) it will read from the returned channel when data is piped through it. It will be executed once. But the loop will be woken up when there is a value to be read (from the channel)
 		fmt.Printf("%s\n", i)
 	}
 }
