@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
+	"log"
+	"net"
 	"time"
 )
 
 func check(e error) {
 	if e != nil {
+		log.Fatal("error", e)
 		panic(e)
 	}
 }
@@ -27,7 +29,6 @@ func getLinesChannel(file io.ReadCloser) <-chan string {
 			if err != nil {
 				break
 			}
-
 			if i = bytes.IndexByte(data, '\n'); i == -1 {
 				str += string(data[:counter])
 			} else {
@@ -46,10 +47,15 @@ func getLinesChannel(file io.ReadCloser) <-chan string {
 
 }
 func main() {
-	file, err := os.Open("./message.txt")
+	listener, err := net.Listen("tcp", ":1234")
 	check(err)
-
-	for i := range getLinesChannel(file) { // 2) it will read from the returned channel when data is piped through it. It will be executed once. But the loop will be woken up when there is a value to be read (from the channel)
-		fmt.Printf("%s\n", i)
+	defer listener.Close()
+	for {
+		conn, err := listener.Accept()
+		check(err)
+		for i := range getLinesChannel(conn) { // 2) it will read from the returned channel when data is piped through it. It will be executed once. But the loop will be woken up when there is a value to be read (from the channel)
+			fmt.Printf("%s\n", i)
+		}
+		conn.Close()
 	}
 }
