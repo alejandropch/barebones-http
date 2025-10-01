@@ -19,9 +19,9 @@ func main() {
 	rAddr, err := net.ResolveUDPAddr("udp", ":4321")
 	check(err)
 	conn, err := net.DialUDP("udp", lAddr, rAddr)
+	check(err)
 	defer conn.Close()
 	reader := bufio.NewReader(os.Stdin)
-	check(err)
 	for {
 		fmt.Printf(">")
 		str, err := reader.ReadString('\n')
