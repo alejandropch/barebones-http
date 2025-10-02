@@ -41,8 +41,14 @@ func getLinesChannel(file io.ReadCloser) <-chan string {
 				str += string(data[i+1:])
 			}
 		}
+		if str != "" {
+			// finding a possible \n in the lasting str variable
+			if i = bytes.IndexByte([]byte(str), '\n'); i != -1 {
+				c <- str[:i]
+			}
+		}
 	}()
-	return c // 1) return out because remember that the go function will execute on other thread
+	return c // 1) return the string channel because remember that the go function will be executed on other thread
 	// so this will be executed almost immediately
 
 }
